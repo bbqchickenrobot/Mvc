@@ -30,7 +30,7 @@ namespace Microsoft.AspNet.Mvc.Razor
         private readonly ILibraryManager _libraryManager;
         private readonly IApplicationEnvironment _environment;
         private readonly IAssemblyLoadContext _loader;
-        private readonly ICompilationOptionsProvider _optionsProvider;
+        private readonly ICompilerOptionsProvider _compilerOptionsProvider;
 
         private readonly Lazy<List<MetadataReference>> _applicationReferences;
 
@@ -46,14 +46,14 @@ namespace Microsoft.AspNet.Mvc.Razor
         public RoslynCompilationService(IApplicationEnvironment environment,
                                         IAssemblyLoadContextAccessor loaderAccessor,
                                         ILibraryManager libraryManager,
-                                        ICompilationOptionsProvider optionsProvider,
+                                        ICompilerOptionsProvider compilerOptionsProvider,
                                         IMvcRazorHost host)
         {
             _environment = environment;
             _loader = loaderAccessor.GetLoadContext(typeof(RoslynCompilationService).GetTypeInfo().Assembly);
             _libraryManager = libraryManager;
             _applicationReferences = new Lazy<List<MetadataReference>>(GetApplicationReferences);
-            _optionsProvider = optionsProvider;
+            _compilerOptionsProvider = compilerOptionsProvider;
             _classPrefix = host.MainClassNamePrefix;
         }
 
@@ -61,7 +61,7 @@ namespace Microsoft.AspNet.Mvc.Razor
         public CompilationResult Compile(IFileInfo fileInfo, string compilationContent)
         {
             var projectPath = _environment.ApplicationBasePath;
-            var compilationSettings = GetCompilationSettings(_environment, _optionsProvider);
+            var compilationSettings = GetCompilationSettings(_environment, _compilerOptionsProvider);
             var syntaxTree = SyntaxTreeGenerator.Generate(compilationContent,
                                                           fileInfo.PhysicalPath,
                                                           compilationSettings);
@@ -127,12 +127,12 @@ namespace Microsoft.AspNet.Mvc.Razor
 
         public static CompilationSettings GetCompilationSettings(
             [NotNull] IApplicationEnvironment applicationEnvironment,
-            [NotNull] ICompilationOptionsProvider compilationOptionsProvider)
+            [NotNull] ICompilerOptionsProvider compilerOptionsProvider)
         {
-            return compilationOptionsProvider.GetCompilerOptions(applicationEnvironment.ApplicationBasePath,
-                                                                 applicationEnvironment.RuntimeFramework,
-                                                                 applicationEnvironment.Configuration)
-                                             .ToCompilationSettings(applicationEnvironment.RuntimeFramework);
+            return compilerOptionsProvider.GetCompilerOptions(applicationEnvironment.ApplicationBasePath,
+                                                              applicationEnvironment.RuntimeFramework,
+                                                              applicationEnvironment.Configuration)
+                                          .ToCompilationSettings(applicationEnvironment.RuntimeFramework);
         }
 
         private List<MetadataReference> GetApplicationReferences()
